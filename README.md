@@ -26,3 +26,9 @@
 - [ ] login system (cookie based)
 - [ ] filtering of mentor
 - [ ] booking of a mentor
+
+#### Conventions
+- 1. Everyone is a student until he applied to be a mentor
+- 2. only name, email and gender needed to create profile
+- 3. rest of the profile details can be set after
+- 4.    
