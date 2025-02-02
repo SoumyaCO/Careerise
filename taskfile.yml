@@ -1,0 +1,76 @@
+# taskfile   : Task runner
+# usage docs : https://taskfile.dev/
+#
+#  - Task is a task runner / build tool
+#  - Easier and has more features than GNU/make (no need of Makefile now)
+#  - Follow the same schema (or read the docs) to add tasks
+#
+# Author : Soumyadip Bhattacharjya (github.com/SoumyaCO)
+# Date   : 02/02/2025
+
+version: '3'
+
+# load environment variables
+dotenv: [.env]
+
+tasks:
+  tt:
+    desc: "For testing the *task* itself."
+    cmds:
+      - echo "$GOOSE_DRIVER"
+      - echo "hello again"
+      - echo {{.CLI_ARGS}}
+
+  startcon:
+    desc: "Creates the mysql container and starts it."
+    cmds:
+      - docker run --name=mysql
+        -p 3306:3306
+        -e MYSQL_ROOT_PASSWORD=pass
+        -v mysql:/var/lib/mysql
+        -d mysql:latest
+
+  entermysql:
+    desc: "Enter into the running mysql container"
+    cmds:
+      - sudo docker exec -it mysql mysql -uroot -p
+
+  stopcon:
+    desc: "Stops and deletes the mysql container."
+    cmds:
+      - docker stop mysql
+      - docker container rm mysql
+
+  newmigration:
+    desc: "Creates a new migration, newmigration -- <name>"
+    cmds:
+      - GOOSE_DRIVER=$GOOSE_DRIVER
+        GOOSE_DBSTRING=$GOOSE_DBSTRING
+        GOOSE_MIGRATION_DIR=$GOOSE_MIGRATION_DIR
+        goose create {{.CLI_ARGS}} sql
+
+  migrateup:
+    desc: "Database migration up"
+    cmds:
+      - GOOSE_DRIVER=$GOOSE_DRIVER
+        GOOSE_DBSTRING=$GOOSE_DBSTRING
+        GOOSE_MIGRATION_DIR=$GOOSE_MIGRATION_DIR
+        goose up
+
+  migratedown:
+    desc: "Database migration down"
+    cmds:
+      - GOOSE_DRIVER=$GOOSE_DRIVER
+        GOOSE_DBSTRING=$GOOSE_DBSTRING
+        GOOSE_MIGRATION_DIR=$GOOSE_MIGRATION_DIR
+        goose down
+
+  test-internal:
+    desc: "Tests the internal packages"
+    cmds:
+      - go test -v ./internal/**
+
+  test-all:
+    desc: "Tests all the packages"
+    cmds:
+      - go test -v ./internal/**

@@ -13,7 +13,7 @@ func main() {
 	mux := http.NewServeMux()
 
     // Database connection testing
-    _, dberror := db.NewDatabaseConnection()
+    _, dberror := db.GetDatabaseConnection()
     if dberror != nil {
         log.Println("DB ERROR")
     }

@@ -1,43 +1,33 @@
 package controllers
 
 import (
-	"database/sql"
 	"log"
-	"os"
 
+	"github.com/SoumyaCO/cr/internal/dal"
+	"github.com/SoumyaCO/cr/internal/db"
 	"github.com/SoumyaCO/cr/internal/model"
-	"github.com/go-sql-driver/mysql"
 )
 
-func CreateDB() (*sql.DB, error) {
-
-    // TODO: load environment variable from an .env file
-
-	config := mysql.Config{
-		User:   os.Getenv("DBUSER"),
-		Passwd: os.Getenv("DBPASS"),
-		Net:    "tcp",
-		Addr:   "127.0.0.1:3306",
-		DBName: "recordings",
-	}
-
-	// Get a database handle.
-	var err error
-	db, err := sql.Open("mysql", config.FormatDSN())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Fatal(pingErr)
-	}
-	return nil, nil
+type UserInterface interface {
+	SignUp(model.User) (int64, error)
+	DeleteUser(int) (int64, error)
 }
 
-type Db *sql.DB
+type User struct {
+	UserInterface
+}
 
-func GetUserByEmailAndPass(data model.SigninData) {
-	err := Db.Query("SELECT password FROM guru WHERE email = ?", data.Email)
-
+func (user User) CreateUser(userInfo model.User) (int64, error) {
+    db, err := db.GetDatabaseConnection()
+    if err != nil {
+        log.Printf("DBConnectionError: %v", err)
+        return 0, nil
+    }
+    udal := dal.UserDal{DB: db}
+    rowsAffected, err := udal.CreateUser(userInfo)
+    if err != nil {
+        log.Printf("rowsAffectedError: %v", err)
+        return 0, nil
+    }
+    return rowsAffected, nil
 }

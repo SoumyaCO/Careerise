@@ -2,59 +2,48 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
 
 type Database struct {
-	careerise *sql.DB
+	*sql.DB
 }
 
-type dbConfigEnv struct {
-	user   string
-	pass   string
-	dbname string
-}
+var instance *Database
+var once sync.Once
 
-func NewDatabaseConnection() (*sql.DB, error) {
-	godotenv.Load()
-	var envConfig dbConfigEnv
+func GetDatabaseConnection() (*Database, error) {
+	once.Do(func() {
+		var db *sql.DB
 
-	// Based on the environmen strings will be different
-	if os.Getenv("ENVIRONMENT") == "LOCAL" {
-		envConfig = dbConfigEnv{
-			user:   os.Getenv("LOCAL_DB_USER"),
-			pass:   os.Getenv("LOCAL_DB_PASS"),
-			dbname: os.Getenv("LOCAL_DB_NAME"),
+        // important: relative path of .env file
+		godotenv.Load("../../.env")
+
+        // print environment variables
+		fmt.Println("DB User\t", os.Getenv("LOCAL_DB_USER"))
+		fmt.Println("DB Pass\t", os.Getenv("LOCAL_DB_PASS"))
+		fmt.Println("DB Name\t", os.Getenv("LOCAL_DB_NAME"))
+
+		cfg := mysql.Config{
+			User:   os.Getenv("LOCAL_DB_USER"),
+			Passwd: os.Getenv("LOCAL_DB_PASS"),
+			Net:    "tcp",
+			Addr:   os.Getenv("LOCAL_DB_PORT"),
+			DBName: os.Getenv("LOCAL_DB_NAME"),
 		}
-	} else {
-		envConfig = dbConfigEnv{
-			user:   os.Getenv("PROD_DB_USER"),
-			pass:   os.Getenv("PROD_DB_PASS"),
-			dbname: os.Getenv("PROD_DB_NAME"),
+
+		var err error
+		db, err = sql.Open("mysql", cfg.FormatDSN())
+		if err != nil {
+			log.Fatalf("Error in DB connection \n %v", err)
 		}
-	}
-
-	config := mysql.Config{
-		User:   envConfig.user,
-		Passwd: envConfig.pass,
-		Net:    "tcp",
-		Addr:   "127.0.0.1:3306",
-		DBName: envConfig.dbname,
-	}
-
-	var err error
-	db, err := sql.Open("mysql", config.FormatDSN())
-	if err != nil {
-		log.Fatalf("Error in DB connection \n %v", err)
-	}
-
-	pingErr := db.Ping()
-	if pingErr != nil {
-		log.Fatalf("Ping Error \n%v", pingErr)
-	}
-	return db, err
+		instance = &Database{db}
+	})
+	return instance, nil
 }

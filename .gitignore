@@ -2,3 +2,5 @@
 vendor
 views/node_modules
 temp/sql_scripts
+.env
+.env
